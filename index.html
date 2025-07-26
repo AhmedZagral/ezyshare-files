@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EzyShare - Easy File Sharing</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .logo {
+            font-size: 2.5em;
+            font-weight: bold;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 60px 20px;
+            margin-bottom: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: rgba(118, 75, 162, 0.1);
+            transform: scale(1.02);
+        }
+
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: rgba(118, 75, 162, 0.2);
+        }
+
+        .upload-area.uploading {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.2em;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .result-area {
+            display: none;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+        }
+
+        .success-icon {
+            font-size: 3em;
+            color: #4CAF50;
+            margin-bottom: 20px;
+        }
+
+        .share-link {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 0.9em;
+            word-break: break-all;
+            color: #333;
+        }
+
+        .file-info {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .file-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .file-size {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .viewer-area {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+        }
+
+        .download-btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            margin-top: 20px;
+        }
+
+        .download-btn:hover {
+            box-shadow: 0 15px 30px rgba(76, 175, 80, 0.4);
+        }
+
+        .back-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            font-size: 0.9em;
+            padding: 10px 20px;
+        }
+
+        .back-btn:hover {
+            box-shadow: 0 10px 20px rgba(255, 107, 107, 0.4);
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #c62828;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        .bounce {
+            animation: bounce 2s infinite;
+        }
+
+        .setup-notice {
+            background: #e8f5e8;
+            color: #2e7d32;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 4px solid #4caf50;
+        }
+
+        .setup-warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 4px solid #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Setup Notice -->
+        <div class="setup-warning" id="setupNotice">
+            <strong>⚠️ Supabase Setup Required</strong><br>
+            Please configure Supabase to enable file uploads. Check the setup instructions below.
+        </div>
+
+        <div id="uploadSection">
+            <div class="logo">EzyShare</div>
+            <div class="subtitle">Upload files and share them instantly with anyone, anywhere</div>
+            
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon bounce">📁</div>
+                <div class="upload-text">Drop your file here or click to browse</div>
+                <div class="upload-subtext">Supports all file types • Max 10MB</div>
+            </div>
+            
+            <input type="file" id="fileInput" class="file-input">
+            <button class="btn" id="uploadBtn" onclick="handleUploadClick()">
+                Choose File
+            </button>
+            
+            <div class="progress-bar" id="progressBar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <div class="error-message" id="errorMessage" style="display: none;"></div>
+            
+            <div class="result-area" id="resultArea">
+                <div class="success-icon">✅</div>
+                <h3>File uploaded successfully!</h3>
+                <div class="file-info" id="fileInfo"></div>
+                <div class="share-link" id="shareLink"></div>
+                <button class="btn" onclick="copyLink()">📋 Copy Link</button>
+                <button class="btn back-btn" onclick="resetUpload()">Upload Another</button>
+            </div>
+        </div>
+
+        <div id="viewerSection" style="display: none;">
+            <div class="logo">EzyShare</div>
+            <div class="subtitle">File Viewer</div>
+            
+            <div class="viewer-area">
+                <div id="fileDetails"></div>
+                <div id="filePreview"></div>
+                <button class="btn download-btn" id="downloadBtn">⬇️ Download File</button>
+                <button class="btn back-btn" onclick="goHome()">🏠 Upload New File</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script>
+        // Supabase configuration - REPLACE WITH YOUR CONFIG
+        const SUPABASE_URL = 'https://gctbkmyorsadqflsrtxk.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjdGJrbXlvcnNhZHFmbHNydHhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1NDAyMjgsImV4cCI6MjA2OTExNjIyOH0.KNjra0QoAc-HRmy97ROnj7h__5K5TqFD_CBOuUffjcM';
+
+        // Initialize Supabase
+        let supabase = null;
+        let supabaseConfigured = false;
+
+        if (SUPABASE_URL !== 'your-project-url-here' && SUPABASE_ANON_KEY !== 'your-anon-key-here') {
+            try {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                supabaseConfigured = true;
+                document.getElementById('setupNotice').innerHTML = `
+                    <strong>✅ Supabase Connected Successfully!</strong><br>
+                    Your file sharing platform is ready to use.
+                `;
+                document.getElementById('setupNotice').className = 'setup-notice';
+            } catch (error) {
+                console.error('Supabase initialization error:', error);
+                showError('Supabase initialization failed: ' + error.message);
+            }
+        }
+
+        // DOM elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const resultArea = document.getElementById('resultArea');
+        const fileInfo = document.getElementById('fileInfo');
+        const shareLink = document.getElementById('shareLink');
+        const uploadSection = document.getElementById('uploadSection');
+        const viewerSection = document.getElementById('viewerSection');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // Drag and drop functionality
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileUpload(files[0]);
+            }
+        });
+
+        uploadArea.addEventListener('click', handleUploadClick);
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileUpload(e.target.files[0]);
+            }
+        });
+
+        function handleUploadClick() {
+            if (!supabaseConfigured) {
+                showError('Please configure Supabase first! Check the setup instructions.');
+                return;
+            }
+            fileInput.click();
+        }
+
+        async function handleFileUpload(file) {
+            if (!supabaseConfigured) {
+                showError('Supabase is not configured. Please set up Supabase first.');
+                return;
+            }
+
+            // Check file size (10MB limit)
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            if (file.size > maxSize) {
+                showError('File size exceeds 10MB limit. Please choose a smaller file.');
+                return;
+            }
+
+            hideError();
+            setUploadingState(true);
+
+            try {
+                // Generate unique file ID and path
+                const fileId = 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const fileName = file.name;
+                const filePath = `files/${fileId}`;
+
+                // Upload file to Supabase Storage
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('ezyshare-files')
+                    .upload(filePath, file, {
+                        cacheControl: '3600',
+                        upsert: false
+                    });
+
+                if (uploadError) {
+                    throw uploadError;
+                }
+
+                // Get public URL for the file
+                const { data: urlData } = supabase.storage
+                    .from('ezyshare-files')
+                    .getPublicUrl(filePath);
+
+                // Save file metadata to database
+                const { data: dbData, error: dbError } = await supabase
+                    .from('files')
+                    .insert([
+                        {
+                            id: fileId,
+                            name: fileName,
+                            size: file.size,
+                            type: file.type,
+                            storage_path: filePath,
+                            public_url: urlData.publicUrl,
+                            upload_date: new Date().toISOString()
+                        }
+                    ]);
+
+                if (dbError) {
+                    throw dbError;
+                }
+
+                // Generate shareable link
+                const shareUrl = window.location.origin + window.location.pathname + '?file=' + fileId;
+                
+                // Display success
+                displayUploadResult(file, shareUrl);
+                setUploadingState(false);
+                
+            } catch (error) {
+                console.error('Upload error:', error);
+                setUploadingState(false);
+                showError('Upload failed: ' + error.message);
+            }
+        }
+
+        function setUploadingState(uploading) {
+            uploadArea.classList.toggle('uploading', uploading);
+            uploadBtn.disabled = uploading;
+            
+            if (uploading) {
+                uploadBtn.innerHTML = '<span class="loading"></span>Uploading...';
+                progressBar.style.display = 'block';
+                // Simulate progress for visual feedback
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 20;
+                    if (progress >= 90) {
+                        progress = 90;
+                        clearInterval(interval);
+                    }
+                    progressFill.style.width = progress + '%';
+                }, 200);
+                
+                // Store interval reference to clear it later
+                window.uploadInterval = interval;
+            } else {
+                uploadBtn.innerHTML = 'Choose File';
+                progressBar.style.display = 'none';
+                progressFill.style.width = '100%';
+                if (window.uploadInterval) {
+                    clearInterval(window.uploadInterval);
+                }
+                setTimeout(() => {
+                    progressFill.style.width = '0%';
+                }, 500);
+            }
+        }
+
+        function displayUploadResult(file, shareUrl) {
+            // Show file info
+            fileInfo.innerHTML = `
+                <div class="file-name">📄 ${file.name}</div>
+                <div class="file-size">Size: ${formatFileSize(file.size)}</div>
+                <div class="file-size">Type: ${file.type || 'Unknown'}</div>
+                <div class="file-size">✅ Stored permanently on Supabase</div>
+            `;
+            
+            // Show share link
+            shareLink.textContent = shareUrl;
+            
+            // Show result area
+            resultArea.style.display = 'block';
+        }
+
+        function copyLink() {
+            const link = shareLink.textContent;
+            navigator.clipboard.writeText(link).then(() => {
+                // Visual feedback
+                const originalText = shareLink.textContent;
+                shareLink.textContent = 'Link copied to clipboard!';
+                shareLink.style.background = '#4CAF50';
+                shareLink.style.color = 'white';
+                
+                setTimeout(() => {
+                    shareLink.textContent = originalText;
+                    shareLink.style.background = 'white';
+                    shareLink.style.color = '#333';
+                }, 2000);
+            });
+        }
+
+        function resetUpload() {
+            resultArea.style.display = 'none';
+            fileInput.value = '';
+            hideError();
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        async function loadFileFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const fileId = urlParams.get('file');
+            
+            if (fileId && supabaseConfigured) {
+                try {
+                    const { data, error } = await supabase
+                        .from('files')
+                        .select('*')
+                        .eq('id', fileId)
+                        .single();
+                    
+                    if (error) {
+                        throw error;
+                    }
+                    
+                    if (data) {
+                        showFileViewer(data);
+                    } else {
+                        showError('File not found or may have been deleted.');
+                    }
+                } catch (error) {
+                    console.error('Error loading file:', error);
+                    showError('Error loading file: ' + error.message);
+                }
+            }
+        }
+
+        function showFileViewer(fileData) {
+            uploadSection.style.display = 'none';
+            viewerSection.style.display = 'block';
+            
+            const uploadDate = new Date(fileData.upload_date).toLocaleString();
+            
+            document.getElementById('fileDetails').innerHTML = `
+                <div class="file-info">
+                    <div class="file-name">📄 ${fileData.name}</div>
+                    <div class="file-size">Size: ${formatFileSize(fileData.size)}</div>
+                    <div class="file-size">Type: ${fileData.type || 'Unknown'}</div>
+                    <div class="file-size">Uploaded: ${uploadDate}</div>
+                </div>
+            `;
+            
+            // Show file preview if it's an image
+            const previewDiv = document.getElementById('filePreview');
+            if (fileData.type && fileData.type.startsWith('image/')) {
+                previewDiv.innerHTML = `<img src="${fileData.public_url}" style="max-width: 100%; max-height: 300px; border-radius: 10px; margin: 20px 0;" alt="File preview">`;
+            } else {
+                previewDiv.innerHTML = `<div style="padding: 40px; background: #f5f5f5; border-radius: 10px; margin: 20px 0; color: #666;">📄 Preview not available for this file type</div>`;
+            }
+            
+            // Setup download button
+            document.getElementById('downloadBtn').onclick = () => {
+                const link = document.createElement('a');
+                link.href = fileData.public_url;
+                link.download = fileData.name;
+                link.target = '_blank';
+                link.click();
+            };
+        }
+
+        function goHome() {
+            uploadSection.style.display = 'block';
+            viewerSection.style.display = 'none';
+            hideError();
+            // Clear URL parameters
+            window.history.pushState({}, document.title, window.location.pathname);
+        }
+
+        // Initialize app
+        window.addEventListener('load', () => {
+            // Wait a bit for Supabase to initialize
+            setTimeout(() => {
+                loadFileFromUrl();
+            }, 500);
+        });
+    </script>
+</body>
+</html>
